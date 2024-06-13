@@ -1,230 +1,241 @@
-/*
- * NOTE: This sample use ES6
- */
-const redirectUri = window.location.protocol + "//" + window.location.hostname + window.location.pathname;
-
-// PureCloud Platform API
-const platformClient = require('platformClient');
-const client = platformClient.ApiClient.instance;
-client.setPersistSettings(true, 'InteractionWidgetProxy');
-
-// Specific Platform API Instances
-const usersApi = new platformClient.UsersApi();
-const notificationsApi = new platformClient.NotificationsApi();
-const conversationsApi = new platformClient.ConversationsApi();
-
-var lifecycleStatusMessageTitle = 'Interaction Widget Proxy';
-var lifecycleStatusMessageId = 'lifecycle-statusMsg';
-var me = null;
-
-// Parse the query parameters to get the gcHostOrigin & gcTargetEnv variable so we can setup
-// the API client against the proper Genesys Cloud region.
-//
-// Note: Genesys Cloud will send us gcEnvironment, gcLangTag, and gcConversationId
-//       when the iframe is first initialized.  However, we'll come through this code
-//       again after the implicit grant redirect, and those parameters won't be there
-//       So we have to check if we were able to parse out the environment or not.
-var integrationQueryString = "";
-if ( window.location.search.length !== 0 ) {
-    document.querySelector("#status").innerHTML = "Authenticating...";
-    integrationQueryString = window.location.search.substring(1);
-} else if ( window.location.hash.length !== 0 ) {
-    document.querySelector("#status").innerHTML = "Authenticated!";
-    integrationQueryString = window.location.hash.substring(1);
+var _queue;
+var _telephoneNumbers = [];
+var _currentUserId = "";
+var _currentPhoneNumber = "";
+var _currentCallIdKey = "";
+var _cubsWebServiceURL = window.location.protocol + "//" + window.location.host + "/WCFCubs/svrPostdataToCubs.svc/WCFCubs/svrPostdataToCubs.svc";
+function navigateToFrame() {
+    //window.open("http://google.ca", "frameTest");
 }
-var appParams = parseAppParameters(integrationQueryString);
-
-console.log("Initializing platform client for region: " + appParams.gcHostOrigin + " with target environment: " + appParams.gcTargetEnv);
-client.setEnvironment(appParams.gcTargetEnv);
-
-
-// Create instance of Client App SDK
-let myClientApp = new window.purecloud.apps.ClientApp({
-    gcHostOrigin: appParams.gcHostOrigin,
-    : appParams.gcTargetEnv
-});
-
-// Log the PureCloud environment (i.e. AWS Region)
-console.log("Genesys Cloud API Client Environment: " + client.environment);
-console.log("Genesys Cloud ClientApp HostOrigin: " + myClientApp.gcHostOrigin);
-console.log("Genesys Cloud ClientApp TargetEnviroment: " + myClientApp.gcTargetEnv);
-console.log("Genesys Cloud ClientApp Version: " + window.purecloud.apps.ClientApp.version);
-console.log("Genesys Cloud ClientApp About: " + window.purecloud.apps.ClientApp.about());
-
-document.querySelector("#gcConversationId").innerHTML = appParams.gcConversationId;
-document.querySelector("#gcHostOrigin").innerHTML = appParams.gcHostOrigin;
-document.querySelector("#gcTargetEnv").innerHTML = appParams.gcTargetEnv;
-document.querySelector("#gcLangTag").innerHTML = appParams.gcLangTag;
-document.querySelector("#gcClientId").innerHTML = appParams.gcClientId;
-
-initializeApplication();
-
-//
-// Bootstrap Listener
-//
-myClientApp.lifecycle.addBootstrapListener(() => {
-    logLifecycleEvent('App Lifecycle Event: bootstrap', true);
-    initializeApplication();
-});
-
-//
-// Focus Listener
-//
-function onAppFocus () {
-    logLifecycleEvent('App Lifecycle Event: focus', true);
-
-    myClientApp.alerting.showToastPopup(
-        lifecycleStatusMessageTitle,
-        'App Focused', {
-            id: lifecycleStatusMessageId
-        }
-    );
-}
-myClientApp.lifecycle.addFocusListener(onAppFocus);
-
-//
-// Blur Listener
-//
-function onAppBlur () {
-    logLifecycleEvent('App Lifecycle Event: blur', true);
-
-    myClientApp.alerting.showToastPopup(
-        lifecycleStatusMessageTitle,
-        'App Blurred', {
-            id: lifecycleStatusMessageId
-        }
-    );
-}
-myClientApp.lifecycle.addBlurListener(onAppBlur);
-
-//
-// Stop Listener
-//
-myClientApp.lifecycle.addStopListener(() => {
-    logLifecycleEvent('App Lifecycle Event: stop', true);
-
-    // Clean up other, persistent listeners
-    myClientApp.lifecycle.removeFocusListener(onAppFocus);
-    myClientApp.lifecycle.removeBlurListener(onAppBlur);
-
-    myClientApp.lifecycle.stopped();
-
-    myClientApp.alerting.showToastPopup(
-        lifecycleStatusMessageTitle,
-        'App Stopped', {
-            id: lifecycleStatusMessageId,
-            type: 'error',
-            showCloseButton: true
-        }
-    );
-
-    logLifecycleEvent('Notified Genesys Cloud of Successful App Stop', false);
-});
-
-function logLifecycleEvent(logText, incommingEvent) {
-    console.log(logText)
-};
-
-function initializeApplication() {
-    console.log("Performing application bootstrapping");
-
-    // Perform Implicit Grant Authentication
-    //
-    // Note: Pass the query string parameters in the 'state' parameter so that they are returned
-    //       to us after the implicit grant redirect.
-    client.loginImplicitGrant(appParams.pcClientId, redirectUri, { state: integrationQueryString })
-        .then((data) => {
-            // User Authenticated
-            console.log("User Authenticated: " + JSON.stringify(data));
-
-            document.querySelector("#status").innerHTML = "Querying User...";
-
-            // Make request to GET /api/v2/users/me?expand=presence
-            return usersApi.getUsersMe({ 'expand': ["presence","authorization"] });
-        })
-        .then((userMe) => {
-            // Me Response
-            me = userMe;
-
-            document.querySelector("#username").innerHTML = me.username;
-
-            document.querySelector("#status").innerHTML = "Querying Conversation...";
-
-            console.log("Getting initial conversation details for conversation ID: " + appParams.gcConversationId);
-            return conversationsApi.getConversation(appParams.gcConversationId);
-        }).then((data) => {
-            console.log("Conversation details for " + appParams.gcConversationId + ": " + JSON.stringify(data));
-            document.querySelector("#conversationEvent").innerHTML = JSON.stringify(data, null, 3);
-
-            myClientApp.lifecycle.bootstrapped();
-
-            myClientApp.alerting.showToastPopup(
-                lifecycleStatusMessageTitle,
-                'Bootstrap Complete', {
-                    id: lifecycleStatusMessageId,
-                    type: 'success'
-                }
-            );
-
-            document.querySelector("#status").innerHTML = "Looking for Proxy URL...";
-
-            // Look to see if a proxy.URL attribute exists in the customer participant data
-            // If so redirect to that URL
-            var customer = data.participants.find((participant) => participant.purpose === "customer")
-            if ( customer !== undefined ) {
-                var proxyUrl = customer.attributes["proxy.URL"];
-                if ( proxyUrl !== undefined ) {
-                    window.location.href = proxyUrl;
-                }
-            }
-
-            logLifecycleEvent('Notified Genesys Cloud of Successful App Bootstrap', false);
-        }).catch((err) => {
-
-            document.querySelector("#status").innerHTML = "Error, See Console";
-
-            // Handle failure response
-            console.log(err);
-        });
-}
-
-function parseAppParameters(queryString) {
-    console.log("Interaction Widget Proxy Query String: " + queryString);
-
-    let appParams = {
-        gcHostOrigin: null,
-        gcTargetEnv: null,
-        gcLangTag: null,
-        gcConversationId: null
-    };
-
-    if ( queryString.length != 0 ) {
-        const pairs = queryString.split('&');
-
-        for (var i = 0; i < pairs.length; i++)
-        {
-            var currParam = pairs[i].split('=');
-
-            if (currParam[0] === 'gcLangTag') {
-                appParams.gcLangTag = currParam[1];
-            } else if (currParam[0] === 'gcHostOrigin') {
-                appParams.gcHostOrigin = currParam[1];
-            } else if (currParam[0] === 'gcTargetEnv') {
-                appParams.gcTargetEnv = currParam[1];
-            } else if (currParam[0] === 'gcConversationId') {
-                appParams.gcConversationId = currParam[1];
-            } else if (currParam[0] === 'pcClientId') {
-                appParams.pcClientId = currParam[1];
-            } else if (currParam[0] === 'state') {
-                console.log("Found 'state' query parameter from implicit grant redirect");
-                var stateValue = currParam[1];
-                console.log("state = " + stateValue);
-                var stateValueDecoded = decodeURIComponent(stateValue);
-                console.log("decoded state = " + stateValueDecoded);
-                appParams = parseAppParameters(decodeURIComponent(stateValueDecoded));
-            }
-        }
+function apiLoaded() {
+    console.log("apiLoaded was triggered !");
+    if (ININ.Addins.IC.sessionInfo == null) {
+        console.log("apiLoaded sessionInfo is null !");
     }
+    var _userId = ININ.Addins.IC.sessionInfo.userId;
+    _currentUserId = _userId;
+    /*if (!ININ.Addins.IC.sessionInfo.connected) {
+        console.log("The view is not connected !");
+        $("#lblWarning").text("The view is NOT connected !");
+    }
+    */
+    if (ININ.Addins.IC.sessionInfo.userId == null) {
+        console.log("apiLoaded - the userid is null !");
+    }
+    _queue = new ININ.Addins.IC.Queues.Queue();
+    _queue.on("interactionAdded",
+        function (interactionAdded) {
+            /*We only handle the interactions once*/
+            /*if(interactionChanged.getAttribute("Handled") == "true")
+            {
+                //return;
+            }
+            */
+            //$("#test").attr("src", "http://www.microsoft.com/");
+            //navigateToFrame();
+            var _time = new Date();
+            var _formattedTime = ("0" + _time.getHours()).slice(-2) + ":" + ("0" + _time.getMinutes()).slice(-2) + ":" + ("0" + _time.getSeconds()).slice(-2);
+            //document.getElementById("version").innerText = "A new interaction id (" + interactionAdded.getAttribute("Eic_CallId") + ")was added on " + _formattedTime;
+            ININ.Addins.IC.Interactions.setAttributes({ interactionId: interactionAdded.getAttribute("Eic_CallId"), attributes: { "Handled": "true" } });
+            //callWebService(interactionAdded.getAttribute("Eic_CallId"), "interactionAdded");
+            $("#txtAccountCode").val(interactionAdded.getAttribute("Eic_CallId"));
 
-    return appParams;
-};
+            if (interactionAdded.getAttribute("Eic_WorkgroupName") == "" && interactionAdded.getAttribute("Eic_CallDirection") == "O") {
+                console.log("Interaction workgroup is empty !");
+                disconnectInteraction(interactionAdded.getAttribute("Eic_CallId"));
+            }
+            else {
+                console.log("Interaction workgroup: " + interactionAdded.getAttribute("Eic_WorkgroupName"));
+            }
+        });
+    console.log("apiLoaded - subscribed to interactionAdded !");
+    _queue.on("interactionChanged",
+        function (interactionChanged) {
+            /*We only handle the interactions once*/
+            /*if(interactionChanged.getAttribute("Handled") == "true")
+            {
+                //return;
+            }
+            */
+            var _time = new Date();
+            var _formattedTime = ("0" + _time.getHours()).slice(-2) + ":" + ("0" + _time.getMinutes()).slice(-2) + ":" + ("0" + _time.getSeconds()).slice(-2);
+            //document.getElementById("version").innerText = "A new interaction id (" + interactionChanged.getAttribute("Eic_CallId") + ")was changed on " + _formattedTime;
+
+            if (interactionChanged.getAttribute("Handled") != "true" && interactionChanged.getAttribute("Eic_State") == "C") {
+                $("#txtAccountCode").val(interactionChanged.getAttribute("Eic_CallId"));
+                ININ.Addins.IC.Interactions.setAttributes({ interactionId: interactionChanged.getAttribute("Eic_CallId"), attributes: { "Handled": "true" } });
+                _currentPhoneNumber = interactionChanged.getAttribute("Eic_RemoteID");
+                _currentCallIdKey = interactionChanged.getAttribute("Eic_CallIdKey");
+                logAccountNumber(_currentCallIdKey, $("#txtAccountCode").val(), ININ.Addins.IC.sessionInfo.userId, _currentPhoneNumber, "");
+            }
+
+        });
+    console.log("apiLoaded - subscribed to interactionChanged !");
+    ININ.Addins.IC.sessionInfo.on("connected", function (sessionInfo) {
+        console.log("The view is connected !"); loadWorkgroups(ININ.Addins.IC.sessionInfo.userId); _queue.subscribe({ queueIds: [{ type: "user", name: sessionInfo.userId }], attributeNames: ["Eic_Direction", "Eic_CallId", "Eic_State", "Eic_CallDirection", "Eic_WorkgroupName", "Eic_CallIdKey", "Eic_RemoteID"] });
+    });
+    console.log("apiLoaded - subscribed to connected !");
+ 
+    //loadWorkgroups("cboldisor");
+}
+function callWebService(interactionId, event) {
+    var _httpRequest = new XMLHttpRequest();
+    _httpRequest.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            //document.getElementById("version").innerText = "Response from the web service: " + this.responseText;
+        }
+    };
+    _httpRequest.open("POST", /*window.location.protocol + "//" + window.location.host+"/WCFCubs/svrPostdataToCubs.svc/submitData"*/_cubsWebServiceURL + "/submitData", true);
+    _httpRequest.setRequestHeader("Content-type", "application/json");
+    _httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
+    _httpRequest.send('{"Id":' + interactionId+',"Message":"'+event+'"}');
+}
+function onClickDialNumber() {
+    $("#lblWarning").text("");
+    if ($("#txtPhone").val() == "") {
+        $("#lblWarning").text("The phone number is mandatory !");
+        return;
+    }
+    if ($("#txtAccountCode").val() == "") {
+        $("#lblWarning").text("The account code is mandatory !");
+        return;
+    }
+    var _workgroup = document.getElementById("dlWorkgroups").options[document.getElementById("dlWorkgroups").selectedIndex].value;
+    console.log("Selected workgroup: " + _workgroup);
+    placeCall($("#txtPhone").val(), _workgroup);
+    _telephoneNumbers.unshift($("#txtPhone").val());
+
+
+    var _phoneSuggestions = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.whitespace,
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        local: _telephoneNumbers
+    });
+
+    $('.typeahead').typeahead(
+        { minLength: 1 },
+        { source: _phoneSuggestions }
+    );
+}
+function placeCall(phone, workgroup) {
+    console.log("placeCall - was called with the params: " + phone + "," + workgroup);
+    if (!ININ.Addins.IC.sessionInfo.connected) {
+        console.log("placeCall - The view is not connected !");
+        return;
+    }
+    ININ.Addins.IC.Interactions.makeCall({ "target": phone }, workgroup);
+}
+function loadWorkgroups(userId) {
+    console.log("loadWorkgroups was called !");
+    console.log("loadWorkgroups user id: " + userId);
+    var _httpRequest = new XMLHttpRequest();
+    _httpRequest.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+
+            var _response = JSON.parse(this.responseText);
+            console.log("Quovim response getWG:" + this.responseText);
+            try {
+                for (var i = 0; i < _response.length; i++) {
+                    var _item = _response[i];
+                    var _option = document.createElement("option");
+                    _option.setAttribute("value", _item.Id);
+                    _option.appendChild(document.createTextNode(_item.Workgroup));
+                    document.getElementById("dlWorkgroups").appendChild(_option);
+                }
+            }
+            catch (e) {
+                console.log("Quovim response getWG:" + e.message);
+            }
+            
+        }
+    };
+    _httpRequest.open("POST", /*window.location.protocol + "//" + window.location.host + "/WCFCubs/svrPostdataToCubs.svc/getWorkgroups"*/_cubsWebServiceURL + "/getWorkgroups", true);
+    _httpRequest.setRequestHeader("Content-type", "application/json");
+    _httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
+    _httpRequest.send('{"UserId":"' + userId + '"}');
+    
+}
+function logAccountNumber(callIdKey, acountNumber, phone, agentId, date) {
+    
+    console.log("logAccountNumber was called !");
+
+    var _httpRequest = new XMLHttpRequest();
+    _httpRequest.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+
+            var _response = JSON.parse(this.responseText);
+            for (var i = 0; i < _response.length; i++) {
+                var _item = _response[i];
+                var _option = document.createElement("option");
+                _option.setAttribute("value", _item.Id);
+                _option.appendChild(document.createTextNode(_item.Workgroup));
+                document.getElementById("dlWorkgroups").appendChild(_option);
+            }
+        }
+    };
+    _httpRequest.open("POST", /*window.location.protocol + "//" + window.location.host + "/WCFCubs/svrPostdataToCubs.svc/submitAccountNumber"*/_cubsWebServiceURL + "/submitAccountNumber", true);
+    _httpRequest.setRequestHeader("Content-type", "application/json");
+    _httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
+    _httpRequest.send('{"CallIdKey":"' + callIdKey + '","AccountNumber":"' + acountNumber + '","Phone":"' + phone + '","AgentId":"' + agentId +'","Date":"\/Date(1539955026940-0400)\/"}');
+
+}
+function disconnectInteraction(interactionId) {
+    console.log("disconnectInteraction was called !");
+    console.log("disconnectInteraction interaction id: " + interactionId);
+    var _httpRequest = new XMLHttpRequest();
+    _httpRequest.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+           // document.getElementById("version").innerText = "Response from the web service: " + this.responseText;
+            
+        }
+    };
+    _httpRequest.open("POST", /*window.location.protocol + "//" + window.location.host + "/WCFCubs/svrPostdataToCubs.svc/disconnectInteraction"*/_cubsWebServiceURL + "/disconnectInteraction", true);
+    _httpRequest.setRequestHeader("Content-type", "application/json");
+    _httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
+    _httpRequest.send('{"InteractionId":"' + interactionId + '"}');
+}
+$(document).ready(function () {
+
+    
+    $("#btnCopyToClipBoard").click(function (e) {
+        $("#txtAccountCode").focus();
+        document.getElementById("txtAccountCode").setSelectionRange(0, $("#txtAccountCode").val().length);
+        document.execCommand("copy");
+    });
+    $("#btnApplyAcountNumber").click(function (e) {
+        $("#lblWarning").text("");
+        if ($("#txtAccountCode").val() == "") {
+            $("#lblWarning").text("The account number is mandatory !");
+            return;
+        }
+        if (_currentCallIdKey == null) {
+            $("#lblWarning").text("There is no active call !");
+            return;
+        }
+        if (ININ.Addins.IC.sessionInfo.userId == null) {
+            $("#lblWarning").text("The add-in is not connected !");
+            return;
+        }
+        logAccountNumber(_currentCallIdKey, $("#txtAccountCode").val(), ININ.Addins.IC.sessionInfo.userId, _currentPhoneNumber, "");
+    });
+    $('#txtPhone').usPhoneFormat({
+        format: '(xxx) xxx-xxxx',
+    });
+    $(window).keydown(function (event) {
+        if (event.keyCode == 13) {
+            event.preventDefault();
+            return false;
+        }
+    });
+    $("#cbNoAccountFound").click(function (e) {
+        var _checkState = $("#cbNoAccountFound").prop("checked") ;
+        if (_checkState) {
+            $("#txtAccountCode").val("No account found");
+            $("#txtAccountCode").prop("disabled", true);
+        }
+        else {
+            $("#txtAccountCode").val("");
+            $("#txtAccountCode").removeAttr("disabled");
+        }
+    })
+});
