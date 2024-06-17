@@ -214,4 +214,42 @@ $(document).ready(function () {
             $("#txtAccountCode").removeAttr("disabled");
         }
     });
+     const clientId = "83d58a4e-d05f-44cb-a5f7-9f12ac7ec668";
+     const redirectUri = window.location.href;
+     let environment = 'cac1.pure.cloud.com';
+
+     // Set Genesys Cloud objects
+     const platformClient = require('platformClient');
+     const client = platformClient.ApiClient.instance;
+     let organizationApi = new platformClient.OrganizationApi();
+
+     client.setEnvironment(environment);
+
+    let apiInstance = new platformClient.RoutingApi();
+
+    // Get a paged listing of queues the user is a member of.
+    
+
+         client.loginImplicitGrant(clientId, redirectUri)
+             .then(() => {
+                          let opts = { 
+                          "pageNumber": 1, // Number | Page number
+                          "pageSize": 25, // Number | Page size
+                          "joined": true, // Boolean | Filter by joined status.
+                          "sortOrder": "asc" // String | Note: results are sorted by name.
+                        };
+                         apiInstance.getRoutingQueuesMe(opts)
+                          .then((data) => {
+                            console.log(`getRoutingQueuesMe success! data: ${JSON.stringify(data, null, 2)}`);
+                          })
+                          .catch((err) => {
+                            console.log("There was a failure calling getRoutingQueuesMe");
+                            console.error(err);
+                          });
+                     })
+                     .catch((err) => {
+                         console.log('There was a failure calling getOrganizationsMe');
+                         console.error(err);
+                     });
+     }
 });
