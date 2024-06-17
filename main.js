@@ -231,26 +231,3 @@ $(document).ready(function () {
 
     // Get a paged listing of queues the user is a member of.
     
-
-         client.loginImplicitGrant(clientId, redirectUri)
-             .then(() => {
-                          let opts = { 
-                          "pageNumber": 1, // Number | Page number
-                          "pageSize": 25, // Number | Page size
-                          "joined": true, // Boolean | Filter by joined status.
-                          "sortOrder": "asc" // String | Note: results are sorted by name.
-                        };
-                         apiInstance.getRoutingQueuesMe(opts)
-                          .then((data) => {
-                            console.log(`getRoutingQueuesMe success! data: ${JSON.stringify(data, null, 2)}`);
-                          })
-                          .catch((err) => {
-                            console.log("There was a failure calling getRoutingQueuesMe");
-                            console.error(err);
-                          });
-                     })
-                     .catch((err) => {
-                         console.log('There was a failure calling getOrganizationsMe');
-                         console.error(err);
-                     });
-});
