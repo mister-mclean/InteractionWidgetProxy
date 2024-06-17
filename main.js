@@ -1,4 +1,4 @@
-var _queue;
+ var _queue;
 var _telephoneNumbers = [];
 var _currentUserId = "";
 var _currentPhoneNumber = "";
@@ -173,7 +173,9 @@ function disconnectInteraction(interactionId) {
     _httpRequest.send(JSON.stringify({ InteractionId: interactionId }));
 }
 
+console.log("Loading document ready!")
 $(document).ready(function () {
+    console.log("Loaded document ready!")
     $("#btnCopyToClipBoard").click(function () {
         $("#txtAccountCode").focus();
         document.getElementById("txtAccountCode").setSelectionRange(0, $("#txtAccountCode").val().length);
