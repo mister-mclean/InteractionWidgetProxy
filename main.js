@@ -253,5 +253,4 @@ $(document).ready(function () {
                          console.log('There was a failure calling getOrganizationsMe');
                          console.error(err);
                      });
-     }
 });
