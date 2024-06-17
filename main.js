@@ -1,4 +1,5 @@
- var _queue;
+console.log("main has loaded!");
+var _queue;
 var _telephoneNumbers = [];
 var _currentUserId = "";
 var _currentPhoneNumber = "";
@@ -65,7 +66,7 @@ function handleInteractionChanged(interactionChanged) {
         logAccountNumber(_currentCallIdKey, $("#txtAccountCode").val(), _currentPhoneNumber, _currentUserId, "");
     }
 }
-
+console.log("callWebService is loading!");
 function callWebService(interactionId, event) {
     var _httpRequest = new XMLHttpRequest();
     _httpRequest.onreadystatechange = function () {
@@ -157,7 +158,7 @@ function logAccountNumber(callIdKey, accountNumber, phone, agentId, date) {
     _httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
     _httpRequest.send(JSON.stringify({ CallIdKey: callIdKey, AccountNumber: accountNumber, Phone: phone, AgentId: agentId, Date: date }));
 }
-
+console.log("disconnectInteraction is loading!");
 function disconnectInteraction(interactionId) {
     console.log("disconnectInteraction was called !");
     console.log("disconnectInteraction interaction id: " + interactionId);
