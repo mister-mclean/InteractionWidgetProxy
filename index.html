@@ -1,141 +1,262 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<html>
+
 <head>
-    <title>H&HAddin</title>
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="bootstrap/js/bootstrap.min.js"></script>
-    <script src="scripts/jquery-input-mask-phone-number.js"></script>
-    <script src='https://sdk-cdn.mypurecloud.com/javascript/27.0.0/purecloud-platform-client-v2.min.js'></script>
-    <link rel="icon" href="images/if_examples_60173.png"/>
-    <link rel="stylesheet" href="css/Styles.css" type="text/css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="main.js" type="text/javascript"></script>
-<style>
-    body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
-}
+    <title>H&H Add-In</title>
 
-.container {
-    width: 400px;
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
-}
+    <script src='//code.jquery.com/jquery-1.11.2.min.js'></script>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://sdk-cdn.mypurecloud.com/javascript/153.0.0/purecloud-platform-client-v2.min.js"></script>
 
-.jumbotron .container-fluid {
-    background-color: white;
-    border-radius: 10px;
-    padding: 2rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-    
-.alert-danger {
-    display: table;
-    color: white;
-    padding: 5px;
-    border-radius: 5px;
-    margin: 0px auto 0px auto;
-    text-align: left;
-    
-}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
 
-.form-control {
-    margin-bottom: 1rem;
-    border-radius: 5px;
-}
+        .container {
+            width: 400px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+        }
 
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-    border-radius: 5px;
-    padding: 0.5rem 1.5rem;
-    margin: 0.5rem;
-}
+        .jumbotron .container-fluid {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-.btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #004085;
-}
+        .alert-danger {
+            display: table;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            margin: 0px auto 0px auto;
+            text-align: left;
+        }
 
-h4 {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    color: black;
-}
+        .form-control {
+            margin-bottom: 1rem;
+            border-radius: 5px;
+        }
 
-h2 {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    color: black;
-}
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            border-radius: 5px;
+            padding: 0.5rem 1.5rem;
+            margin: 0.5rem;
+        }
 
-.checkbox label {
-    color: black;
-}
+            .btn-primary:hover {
+                background-color: #0056b3;
+                border-color: #004085;
+            }
 
-input[type="text"] {
-    border: 1px solid #ced4da;
-    padding: 0.5rem;
-    font-size: 1rem;
-}
+        h4 {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            color: black;
+        }
 
-select.form-control {
-    font-size: 1rem;
-    padding: 0.5rem;
-    height: auto;
-}
+        h2 {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            color: black;
+        }
 
-.text-center {
-    text-align: left;
-}
+        .checkbox label {
+            color: black;
+        }
 
-.halfSize {
-    width: 50%;
-}
+        input[type="text"] {
+            border: 1px solid #ced4da;
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
 
-@media (max-width: 768px) {
-    .halfSize {
-        width: 100%;
-    }
+        select.form-control {
+            font-size: 1rem;
+            padding: 0.5rem;
+            height: auto;
+        }
 
-    .jumbotron .container-fluid {
-        padding: 1rem;
-    }
+        .text-center {
+            text-align: left;
+        }
 
-    .btn-primary {
-        width: 100%;
-        margin: 0.5rem 0;
+        .halfSize {
+            width: 50%;
+        }
 
-    }
-}
-</style>
-<!--[if gte mso 9]><xml>
-<mso:CustomDocumentProperties>
-<mso:MediaServiceImageTags msdt:dt="string"></mso:MediaServiceImageTags>
-<mso:lcf76f155ced4ddcb4097134ff3c332f msdt:dt="string"></mso:lcf76f155ced4ddcb4097134ff3c332f>
-<mso:TaxCatchAll msdt:dt="string"></mso:TaxCatchAll>
-</mso:CustomDocumentProperties>
-</xml><![endif]-->
+        @media (max-width: 768px) {
+            .halfSize {
+                width: 100%;
+            }
+
+            .jumbotron .container-fluid {
+                padding: 1rem;
+            }
+
+            .btn-primary {
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+
+
+    <script>
+        const platformClient = require('platformClient');
+
+        const client = platformClient.ApiClient.instance;
+        client.setEnvironment(platformClient.PureCloudRegionHosts.ca_central_1); // Genesys Cloud region
+        const GENESYS_CLOUD_CLIENT_ID = "83d58a4e-d05f-44cb-a5f7-9f12ac7ec668"; // TODO: Change me for the appropriate oAuth client ID
+        const REDIRECT_URI = 'http://localhost:8085/clicktocallimplicitgrant.html'
+
+        let tokenApi = new platformClient.TokensApi();
+        let conversationsApi = new platformClient.ConversationsApi();
+        let routingApi = new platformClient.RoutingApi();
+
+        const genesysCloudAccessToken = sessionStorage.getItem('genesysCloudAccessToken');
+        const genesysCloudTokenExpiryTime = sessionStorage.getItem('genesysCloudTokenExpiryTime');
+
+        if (genesysCloudAccessToken && genesysCloudTokenExpiryTime && genesysCloudTokenExpiryTime > Date.now()) {
+            client.setAccessToken(genesysCloudAccessToken);
+
+            tokenApi.headTokensMe()
+                .then(() => {
+                    console.log('headTokensMe returned successfully. Do not need to call login implicit grant');
+
+                    authenticatedPageLoad();
+                })
+                .catch((err) => {
+                    console.log('There was a failure calling headTokensMe');
+                    console.error(err);
+
+                    authenticate();
+                });
+        } else {
+            authenticate();
+        }
+
+        function authenticate() {
+            client.loginImplicitGrant(GENESYS_CLOUD_CLIENT_ID, REDIRECT_URI)
+                .then((data) => {
+                    console.log(data);
+                    sessionStorage.setItem('genesysCloudAccessToken', data.accessToken);
+                    sessionStorage.setItem('genesysCloudTokenExpiryTime', data.tokenExpiryTime);
+
+                    authenticatedPageLoad();
+                });
+        }
+
+        function authenticatedPageLoad() {
+            loadUserAssignedQueues();
+        }
+
+        function loadUserAssignedQueues() {
+            let opts = {
+                "pageNumber": 1, // Number | Page number
+                "pageSize": 100, // Number | Page size
+                "joined": true, // Boolean | Filter by joined status.
+                "sortOrder": "asc" // String | Note: results are sorted by name.
+            };
+            routingApi.getRoutingQueuesMe(opts)
+                .then((data) => {
+                    console.log(`getRoutingQueuesMe success! data: ${JSON.stringify(data, null, 2)}`);
+
+                    const selector = document.getElementById(`dlWorkgroups`);
+
+                    for (let i = 0; i < data.entities.length; i++) {
+                        let opt = document.createElement(`option`);
+                        opt.value = data.entities[i].id;
+                        opt.innerHTML = data.entities[i].name;
+                        selector.appendChild(opt);
+                    }
+                    /*
+                    data.entities.foreach(element => {
+                        let opt = document.createElement(`option`);
+                        opt.value = element.id;
+                        opt.innerHTML = element.name;
+                        selector.appendChild(opt);
+                    })*/
+                })
+                .catch((err) => {
+                    console.log("There was a failure calling getRoutingQueuesMe");
+                    console.error(err);
+                });
+
+            
+        }
+
+        function logout() {
+            sessionStorage.removeItem('genesysCloudAccessToken');
+            sessionStorage.removeItem('genesysCloudTokenExpiryTime');
+            tokenApi.deleteTokensMe().then(() => {
+                window.location.href = 'homepage.html';
+            }).catch((err) => console.log('Could not delete token : ', err));
+        }
+
+        function makecall(clientphone, queueID) {
+            let body = { "phoneNumber": clientphone, "callFromQueueId": queueID }; // Object | Call request
+            const btnDial = document.getElementById('btnDial');
+            btnDial.value = "Dialing...";
+            btnDial.classList.add('dialing');
+
+            // Create a call conversation
+            conversationsApi.postConversationsCalls(body)
+                .then((data) => {
+                    console.log(`postConversationsCalls success! data: ${JSON.stringify(data, null, 2)}`);
+                    setTimeout(() => {
+                        btnDial.value = "Dial number";
+                        btnDial.classList.remove('dialing');
+                    }, 3000);
+                })
+                .catch((err) => {
+                    console.log("There was a failure calling postConversationsCalls");
+                    console.error(err);
+                    // Revert the button back to normal if there's an error
+                    btnDial.value = "Dial number";
+                    btnDial.classList.remove('dialing');
+                });
+        }
+
+        function onClickDialNumber() {
+            const phoneNumber = document.getElementById('txtPhone').value;
+            const queueID = document.getElementById('dlWorkgroups').value;
+            if (phoneNumber && queueID !== '-') {
+                makecall(phoneNumber, queueID);
+            } else {
+                alert('Please enter a phone number and select a workgroup.');
+            }
+        }
+    </script>
+
 </head>
+
+
 <body>
+
+
     <form id="frmTestFrm">
         <div class="jumbotron">
             <div class="container-fluid">
-                 <!--<div class="row">
+                <!--<div class="row">
                     <div class="col-lg-12"><p class="text-center"><img src="images/logo.png"/ class="img-fluid" alt="Harris Logo"/></p></div>
                 </div>-->
                 <div class="row">
                     <div class="col-lg-12"><h2 class="alert-danger text-center" id="lblWarning"></h2></div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-2"><h4>Please select a workgroup:</h4></div>
+                    <div class="col-lg-2"><h4>Please select a queue:</h4></div>
                     <div class="col-lg-10"><select id="dlWorkgroups" class="form-control"><option value="-">-</option></select></div>
                 </div>
                 <div class="row">
@@ -162,6 +283,9 @@ select.form-control {
             </div>
         </div>
     </form>
+
+    <button onclick="logout()">Logout</button>
+
 </body>
-<script src="http://sekweb02/client/lib/addins/inin.addins.lib.js"; data-callback="apiLoaded"></script>
+
 </html>
